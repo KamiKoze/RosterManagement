@@ -1,164 +1,71 @@
 import pandas as pd
-from pathlib import Path
 
-class RosterConsol:
-    
-    def __init__(self):
-        self.df1 = df1
-        self.df2 = df2
-        self.df3 = df3
-        self.df4 = df4
-        self.df5 = df5
-        self.dtmsVerify = dtmsVerify
-        self.vantageVerify = vantageVerify
-        self.ippsaVerify = ippsaVerify
-        self.disVerify = disVerify
-        self.perstatVerify = perstatVerify
+def read_csv_and_rename_columns(file_path, column_mapping, source_id):
+    """
+    Read a CSV file, rename specified columns, and return a Pandas DataFrame.
 
-    @classmethod
-    def csv_DF(self):
-        if Path("Rosters/DTMS.csv").exists():
-            self.df1 = pd.read_csv('Rosters/DTMS.csv')
-            self.dtmsVerify = True
-            print("DTMS Dataframe: Success")
-            self.proc_D()
-        else:
-            self.dtmsVerify = False
-            print("DTMS Dataframe: Fail")
-            
-        if Path("Rosters/Vantage.csv").exists():
-            self.df2 = pd.read_csv('Rosters/Vantage.csv')
-            self.vantageVerify = True
-            print("Vantage Dataframe: Success")
-            self.proc_V()
-        else:
-            self.vantageVerify = False
-            print("Vantage Dataframe: Fail")
-                
-        if Path("Rosters/IPPSA.csv").exists():
-            self.df3 = pd.read_csv('Rosters/IPPSA.csv')
-            self.ippsaVerify = True
-            print("IPPSA Dataframe: Success")
-            self.proc_I()
-        else:
-            self.ippsaVerify = False
-            print("IPPSA Dataframe: Fail")
+    Args:
+        file_path (str): The path to the CSV file.
+        rename_mapping (dict): A dictionary where keys are the current column names and values are the new column names.
+        source_id (str): The column name to identify which data source the data was derived from.
 
-        if Path("Rosters/DISS.csv").exists():
-            self.df4 = pd.read_csv('Rosters/DISS.csv')
-            self.dissVerify = True
-            print("DISS Dataframe: Success")
-            self.proc_DISS()
-        else:
-            self.perstatVerify = False
-            print("DISS Dataframe: Fail")
+    Returns:
+        pandas.DataFrame: The DataFrame with renamed columns.
+    """
+    try:
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(file_path)
 
-        if Path("Rosters/PERSTAT.csv").exists():
-            self.df5 = pd.read_csv('Rosters/PERSTAT.csv')
-            self.perstatVerify = True
-            print("PERSTAT Dataframe: Success")
-            self.proc_P()
-        else:
-            self.perstatVerify = False
-            print("PERSTAT Dataframe: Fail")
-        
-    @classmethod
-    def proc_D(self):
-        if self.dtmsVerify == True:
-            self.df1.rename(columns={'Name': 'DTMS_Name'}, inplace=True)
-            print(f"DTMS Column NAME: Success\n", self.df1.head())
-            self.df1.insert(0, "DTMS_ID", self.df1.index+1)
-            print("DTMS Enumeration: Success")
-        else:
-            print("DTMS Processing: Fail")
-            
-    @classmethod
-    def proc_V(self):
-        if self.vantageVerify == True:
-            self.df2.rename(columns={'Name': 'Vantage_Name', 'DoDID':'EDIPI'}, inplace=True)
-            print(f"Vantage Column Name and EDIPI: Success\n", self.df2.head())
-            self.df2.insert(0, "Vantage_ID", self.df2.index+1)
-            print("Vantage Enumeration: Success")
+        # Rename specified columns
+        df.rename(columns=column_mapping, inplace=True)
 
-        else:
-            print(f"Vantage Processing: Fail")
+        # Add ID column for dataframe
+        df.insert(0, source_id, df.index+1)
 
-    @classmethod
-    def proc_I(self):
-        if self.ippsaVerify == True:
-            self.df3.rename(columns={'Name': 'IPPSA_Name', 'DOD ID':'EDIPI'}, inplace=True)
-            print(f"IPPS-A Column EDIPI: Success\n", self.df3.head())
-            self.df3.insert(0, "IPPSA_ID", self.df3.index+1)
-            print("IPPS-A Enumeration: Success")
+        return df
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
 
-        else:
-            print(f"IPPS-A Processing: Fail")
+def merge_dataframes(df1, df2, on="EDIPI"):
+    """
+    Merge two pandas DataFrames and return the merged DataFrame.
 
-    @classmethod
-    def proc_DISS(self):
-        if self.dissVerify == True:
-            self.df4.rename(columns={'SUBJECT NAME': 'DISS_Name'}, inplace=True)
-            print(f"DISS Column EDIPI: Success\n", self.df4.head())
-            self.df4.insert(0, "DISS_ID", self.df4.index+1)
-            print("DISS Enumeration: Success")
+    Args:
+    - df1 (pd.DataFrame): The first DataFrame to be merged.
+    - df2 (pd.DataFrame): The second DataFrame to be merged.
+    - on (str): Column or index level names to join on.
 
-        else:
-            print(f"DISS Processing: Fail")
+    Returns:
+    - pd.DataFrame: The merged DataFrame.
 
-    @classmethod
-    def proc_P(self):
-        if self.perstatVerify == True:
-            self.df5.rename(columns={'Name': 'PERSTAT_Name'}, inplace=True)
-            print(f"PERSTAT Column EDIPI: Success\n", self.df5.head())
-            self.df5.insert(0, "PERSTAT_ID", self.df5.index+1)
-            print("PERSTAT Enumeration: Success")
+    Raises:
+    - ValueError: If the input DataFrames are not of the correct data type or if
+      the dataframes cannot merge for another reason.
+    """
+    # Check if df1 and df2 are DataFrames
+    if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
+        raise ValueError("Both df1 and df2 must be pandas DataFrames")
 
-        else:
-            print(f"PERSTAT Processing: Fail")
+    try:
+        # Perform the merge operation
+        merged_df = pd.merge(df1, df2, on=on, how="outer")
+        return merged_df
+    except Exception as e:
+        raise ValueError(f"An error occurred during merge: {e}")
 
-    @classmethod
-    def merge_DV(self):
-        if self.dtmsVerify == True and self.vantageVerify == True:
-            self.dfm1 = pd.merge(self.df1, self.df2, on='EDIPI', how="outer")
-            self.dfm1.to_csv("Rosters/Merge_EDIPI.csv", index=None)
-            print("DTMS-Vantage Merge: Success")
-        else:
-            print("DTMS-Vantage Merge: Fail")
+# Convert CSV files to dataframes
+dtms_df = read_csv_and_rename_columns("Rosters/DTMS.csv", {'Name': 'DTMS_Name'}, "DTMS_ID")
+vantage_df = read_csv_and_rename_columns("Rosters/Vantage.csv", {'Name': 'Vantage_Name', 'DoDID':'EDIPI'}, "Vantage_ID")
+ippsa_df = read_csv_and_rename_columns("Rosters/Vantage.csv", {'Name': 'IPPSA_Name', 'DOD ID':'EDIPI'}, "IPPSA_ID")
+diss_df = read_csv_and_rename_columns("Rosters/DISS.csv", {'SUBJECT NAME': 'DISS_Name'}, "DISS_ID")
+perstat_df = read_csv_and_rename_columns("Rosters/PERSTAT.csv", {'Name': 'PERSTAT_Name'}, "PERSTAT_ID")
 
-    @classmethod
-    def merge_DVI(self):
-        if self.dtmsVerify == True and self.vantageVerify == True and self.ippsaVerify ==True:
-            self.dfm2 = pd.merge(self.dfm1, self.df3, on='EDIPI', how="outer")
-            self.dfm2.to_csv("Rosters/Merge_EDIPI2.csv", index=None)
-            print("D-V-IPPSA Merge: Success")
-        else:
-            print("D-V-IPPSA Merge: Fail")
-            
-    @classmethod
-    def merge_DVID(self):
-        if self.dtmsVerify == True and self.vantageVerify == True and self.ippsaVerify ==True and self.perstatVerify ==True:
-            self.dfm3 = pd.merge(self.dfm2, self.df4, on='EDIPI', how="outer")
-            self.dfm3.to_csv("Rosters/Merge_EDIPI3.csv", index=None)
-            print("D-V-I-DISS Merge: Success")
-        else:
-            print("D-V-I-DISS Merge: Fail")
-            
-    @classmethod
-    def merge_DVIDP(self):
-        if self.dtmsVerify == True and self.vantageVerify == True and self.ippsaVerify ==True and self.perstatVerify ==True:
-            self.dfm4 = pd.merge(self.dfm3, self.df5, on='EDIPI', how="outer")
-            print("D-V-I-D-PERSTAT Merge: Success")
-            self.dfm4.insert(0, "Merge_ID", self.dfm4.index+1)
-            print("Merge Enumeration: Success")
-            self.dfm4.to_csv("Rosters/Merge_EDIPI3.csv", index=None)
-            print("Roster Consolidation: Success")
-        else:
-            print("D-V-I-D-PERSTAT Merge: Fail")
+# Merge individual report together
+merged_df = merge_dataframes(dtms_df, vantage_df)
+merged_df = merge_dataframes(merged_df, ippsa_df)
+merged_df = merge_dataframes(merged_df, diss_df)
+merged_df = merge_dataframes(merged_df, perstat_df)
 
-rc = RosterConsol
-
-rc.csv_DF()
-rc.merge_DV()
-rc.merge_DVI()
-rc.merge_DVID()
-rc.merge_DVIDP()
+# Save the merged dataframes to a CSV file
+merged_df.to_csv("Rosters/Merge_EDIPI.csv", index=None)
